@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>POP Game - 20x20 Grid</title>
+  <style>
+    body {
+      font-family: 'Montserrat', Arial, sans-serif;
+      background: linear-gradient(135deg, #0f0f1a, #1a1a2e);
+      text-align: center;
+      margin: 0;
+      padding: 20px;
+      color: white;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+
+    h2 {
+      color: #ff00ff;
+      font-size: 42px;
+      letter-spacing: 3px;
+      text-shadow: 0 0 10px #ff00ff, 0 0 20px #ff00ff;
+      margin-top: 20px;
+      margin-bottom: 30px;
+      font-weight: 700;
+    }
+
+    #grid-container {
+      perspective: 800px;
+    }
+
+    #grid {
+      display: grid;
+      grid-template-columns: repeat(20, 28px);
+      grid-template-rows: repeat(20, 28px);
+      justify-content: center;
+      gap: 2px;
+      transform-style: preserve-3d;
+    }
+
+    .cell {
+      width: 28px;
+      height: 28px;
+      background: rgba(26, 26, 42, 0.7);
+      border: 2px solid #ff00ff;
+      font-size: 16px;
+      font-weight: bold;
+      line-height: 28px;
+      text-align: center;
+      cursor: pointer;
+      box-sizing: border-box;
+      transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      box-shadow: 0 0 5px rgba(255, 0, 255, 0.3);
+      color: white;
+      text-shadow: 0 0 5px #ff00ff;
+    }
+
+    .cell:hover {
+      background-color: #ff00ff;
+      color: #1a1a2e;
+      transform: scale(1.2) translateZ(10px);
+      box-shadow: 0 0 15px rgba(255, 0, 255, 0.8);
+      z-index: 10;
+    }
+
+    .cell.show {
+      animation: pulse 0.5s ease-out;
+    }
+
+    .cell.pop-highlight {
+      background-color: #ff00ff;
+      color: #1a1a2e;
+      box-shadow: 0 0 20px rgba(255, 0, 255, 1);
+      animation: highlight 1s ease-out;
+    }
+
+    @keyframes highlight {
+      0% { transform: scale(1); background-color: #ff00ff; }
+      50% { transform: scale(1.3); background-color: #ffff00; }
+      100% { transform: scale(1); background-color: #ff00ff; }
+    }
+
+    @keyframes pulse {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.3); }
+      100% { transform: scale(1); }
+    }
+
+    #controls {
+      margin-top: 40px;
+      position: relative;
+      padding: 20px 0;
+    }
+
+    #letterSelect {
+      display: flex;
+      justify-content: center;
+      gap: 100px;
+      margin-bottom: 10px;
+    }
+
+    .letter-btn {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      width: 80px;
+      height: 80px;
+      font-size: 32px;
+      font-weight: bold;
+      cursor: pointer;
+      border: 3px solid #ff00ff;
+      border-radius: 50%;
+      background-color: rgba(26, 26, 42, 0.7);
+      color: #ff00ff;
+      transition: all 0.3s ease;
+      box-shadow: 0 0 15px rgba(255, 0, 255, 0.5);
+    }
+
+    .letter-btn:hover {
+      background-color: #ff00ff;
+      color: #1a1a2e;
+      box-shadow: 0 0 20px rgba(255, 0, 255, 0.9);
+      transform: scale(1.1);
+    }
+
+    .letter-btn.active {
+      background-color: #ff00ff;
+      color: #1a1a2e;
+      box-shadow: 0 0 25px rgba(255, 0, 255, 1);
+    }
+
+    /* Names styling */
+    #names {
+      display: flex;
+      justify-content: center;
+      gap: 100px;
+      margin-top: 10px;
+    }
+
+    .name {
+      font-size: 28px;
+      font-weight: bold;
+      color: #ff00ff;
+      text-shadow: 0 0 8px #ff00ff;
+      letter-spacing: 2px;
+      animation: glow 2s ease-in-out infinite alternate;
+    }
+
+    @keyframes glow {
+      from { text-shadow: 0 0 5px #ff00ff, 0 0 10px #ff00ff; }
+      to { text-shadow: 0 0 10px #ff00ff, 0 0 20px #ff00ff, 0 0 30px #ff00ff; }
+    }
+
+    /* Score display */
+    #scores {
+      display: flex;
+      justify-content: center;
+      gap: 120px;
+      margin-top: 20px;
+      margin-bottom: 20px;
+    }
+
+    .score {
+      font-size: 36px;
+      font-weight: bold;
+      color: white;
+      text-shadow: 0 0 10px #ff00ff;
+      padding: 10px 20px;
+      background-color: rgba(26, 26, 42, 0.8);
+      border: 2px solid #ff00ff;
+      border-radius: 10px;
+      box-shadow: 0 0 15px rgba(255, 0, 255, 0.5);
+    }
+
+    #currentPlayer {
+      margin-top: 20px;
+      font-size: 24px;
+      color: white;
+      text-shadow: 0 0 5px #ff00ff;
+      background-color: rgba(26, 26, 42, 0.8);
+      padding: 10px 20px;
+      border-radius: 10px;
+      border: 2px solid #ff00ff;
+      display: inline-block;
+    }
+
+    #gameMessage {
+      margin-top: 20px;
+      font-size: 26px;
+      font-weight: bold;
+      color: #ffff00;
+      text-shadow: 0 0 10px #ffff00;
+      height: 40px;
+    }
+
+    /* Responsive adjustments */
+    @media (max-width: 768px) {
+      #grid {
+        grid-template-columns: repeat(20, 20px);
+        grid-template-rows: repeat(20, 20px);
+      }
+      
+      .cell {
+        width: 20px;
+        height: 20px;
+        font-size: 12px;
+        line-height: 20px;
+      }
+      
+      #letterSelect {
+        gap: 60px;
+      }
+      
+      #names {
+        gap: 60px;
+      }
+      
+      .letter-btn {
+        width: 60px;
+        height: 60px;
+        font-size: 26px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <h2>POP GAME</h2>
+
+  <div id="scores">
+    <div class="score" id="scoreP">PLAYER 1: 0</div>
+    <div class="score" id="scoreO">PLAYER 2: 0</div>
+  </div>
+
+  <div id="currentPlayer">Current Turn: PLAYER 1</div>
+  
+  <div id="gameMessage"></div>
+
+  <div id="grid-container">
+    <div id="grid"></div>
+  </div>
+
+  <div id="controls">
+    <div id="letterSelect">
+      <span id="selectP" class="letter-btn active">P</span>
+      <span id="selectO" class="letter-btn">O</span>
+    </div>
+  </div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      const grid = document.getElementById("grid");
+      const gameMessage = document.getElementById("gameMessage");
+      const currentPlayerDisplay = document.getElementById("currentPlayer");
+      const scoreP = document.getElementById("scoreP");
+      const scoreO = document.getElementById("scoreO");
+      
+      let selectedLetter = "P";
+      let currentPlayer = "PLAYER 1";
+      let scores = { "PLAYER 1": 0, "PLAYER 2": 0 };
+      let gridData = Array(20).fill().map(() => Array(20).fill(""));
+      let cellsRemaining = 20 * 20;
+      let lastPlacedCell = null;
+      
+      const selectP = document.getElementById("selectP");
+      const selectO = document.getElementById("selectO");
+
+      selectP.onclick = () => {
+        selectedLetter = "P";
+        selectP.classList.add("active");
+        selectO.classList.remove("active");
+      };
+
+      selectO.onclick = () => {
+        selectedLetter = "O";
+        selectO.classList.add("active");
+        selectP.classList.remove("active");
+      };
+
+      function switchPlayer() {
+        currentPlayer = currentPlayer === "PLAYER 1" ? "PLAYER 2" : "PLAYER 1";
+        currentPlayerDisplay.textContent = "Current Turn: " + currentPlayer;
+      }
+
+      function updateScores() {
+        scoreP.textContent = "PLAYER 1: " + scores["PLAYER 1"];
+        scoreO.textContent = "PLAYER 2: " + scores["PLAYER 2"];
+      }
+
+      function checkForPOP(row, col) {
+        const directions = [
+          // Horizontal
+          [[0, 0], [0, 1], [0, 2]],
+          [[0, -1], [0, 0], [0, 1]],
+          [[0, -2], [0, -1], [0, 0]],
+          
+          // Vertical
+          [[0, 0], [1, 0], [2, 0]],
+          [[-1, 0], [0, 0], [1, 0]],
+          [[-2, 0], [-1, 0], [0, 0]],
+          
+          // Diagonal (top-left to bottom-right)
+          [[0, 0], [1, 1], [2, 2]],
+          [[-1, -1], [0, 0], [1, 1]],
+          [[-2, -2], [-1, -1], [0, 0]],
+          
+          // Diagonal (top-right to bottom-left)
+          [[0, 0], [1, -1], [2, -2]],
+          [[-1, 1], [0, 0], [1, -1]],
+          [[-2, 2], [-1, 1], [0, 0]]
+        ];
+
+        let popsFound = [];
+
+        directions.forEach(direction => {
+          let letters = [];
+          let cells = [];
+          
+          for (let i = 0; i < 3; i++) {
+            const r = row + direction[i][0];
+            const c = col + direction[i][1];
+            
+            if (r >= 0 && r < 20 && c >= 0 && c < 20) {
+              letters.push(gridData[r][c]);
+              cells.push({ row: r, col: c });
+            } else {
+              letters.push("");
+            }
+          }
+          
+          if (letters.join("") === "POP") {
+            popsFound.push(cells);
+          }
+        });
+
+        return popsFound;
+      }
+
+      function highlightPOP(popCells) {
+        const allCells = [].concat(...popCells);
+        
+        allCells.forEach(cell => {
+          const index = cell.row * 20 + cell.col;
+          const cellElement = document.querySelectorAll('.cell')[index];
+          cellElement.classList.add('pop-highlight');
+          
+          setTimeout(() => {
+            cellElement.classList.remove('pop-highlight');
+          }, 1000);
+        });
+      }
+
+      // Create the grid cells
+      for (let i = 0; i < 20 * 20; i++) {
+        const row = Math.floor(i / 20);
+        const col = i % 20;
+        
+        const cell = document.createElement("div");
+        cell.classList.add("cell");
+        cell.dataset.row = row;
+        cell.dataset.col = col;
+
+        cell.onclick = () => {
+          if (cell.textContent === "") {
+            cell.textContent = selectedLetter;
+            gridData[row][col] = selectedLetter;
+            cellsRemaining--;
+            
+            const pops = checkForPOP(row, col);
+            
+            if (pops.length > 0) {
+              scores[currentPlayer] += pops.length;
+              updateScores();
+              highlightPOP(pops);
+              
+              gameMessage.textContent = `${currentPlayer} found ${pops.length} POP${pops.length > 1 ? 's' : ''}!`;
+              setTimeout(() => {
+                gameMessage.textContent = "";
+              }, 2000);
+            } else {
+              switchPlayer();
+            }
+            
+            if (cellsRemaining === 0) {
+              let winner;
+              if (scores["PLAYER 1"] > scores["PLAYER 2"]) {
+                winner = "PLAYER 1";
+              } else if (scores["PLAYER 2"] > scores["PLAYER 1"]) {
+                winner = "PLAYER 2";
+              } else {
+                winner = "It's a tie!";
+              }
+              
+              gameMessage.textContent = `Game Over! ${winner === "It's a tie!" ? winner : winner + " wins!"}`;
+              
+              document.querySelectorAll('.cell').forEach(c => {
+                c.onclick = null;
+                c.style.cursor = "default";
+              });
+            }
+            
+            cell.classList.add("show");
+            setTimeout(() => {
+              cell.classList.remove("show");
+            }, 500);
+          }
+        };
+
+        grid.appendChild(cell);
+      }
+    });
+  </script>
+</body>
+</html>
